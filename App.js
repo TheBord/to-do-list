@@ -1,23 +1,52 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import { Keyboard, TouchableOpacity, StyleSheet, Text, View, KeyboardAvoidingView, TextInput } from 'react-native';
 import Task from './components/Task';
+import { AsyncStorage } from 'react-native';
+
+_storeData = (tasks) => {
+  try {
+    AsyncStorage.setItem(
+      'TASKS',
+      tasks
+    );
+  } catch (error) {
+    // Error saving data
+  }
+};
+
+_retrieveData = async () => {
+  try {
+    const value = await AsyncStorage.getItem('TASKS');
+    if (value !== null) {
+      return JSON.parse(value);
+    }
+    return [];
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 export default function App() {
   const [task, setTask] = useState();
   const [taskItems, setTaskItems] = useState([]);
+  useEffect(() => {
+    _retrieveData().then(data => {setTaskItems(data);taskItems = data});
+   }, []);
 
   const handleAddTask = () => {
     Keyboard.dismiss();
-    setTaskItems([...taskItems, task]);
+    let tasks = [...taskItems, task];
+    _storeData(JSON.stringify(tasks));
+    setTaskItems(tasks);
     setTask(null); 
   }
 
   const completeTask = (index) => {
     let itemsCopy = [...taskItems];
     itemsCopy.splice(index, 1);
+    _storeData(JSON.stringify(itemsCopy));
     setTaskItems(itemsCopy);
   }
-
   return (
     <View style={styles.container}>
       <View style={styles.tasksWrapper}>
